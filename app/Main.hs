@@ -1,8 +1,3 @@
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE OverloadedStrings     #-}
-
 module Main (main) where
 
 import Lib
@@ -16,3 +11,5 @@ main = do
   print priceResp
   priceHistResp <- fetchDailyPriceHistory "BTC" "USD" 300
   print priceHistResp
+  snapshotResp <- fetchCoinSnapshot "BTC" "USD"
+  print snapshotResp
