@@ -28,6 +28,7 @@ import           Data.List
 import           Data.Map               (Map)
 import           Data.Maybe
 import           Data.Time.Clock
+import           Data.Time.Clock.POSIX
 import           GHC.Generics
 import           Network.HTTP.Simple
 import           Text.Printf
@@ -119,16 +120,16 @@ data AggregatedSnapshot = AggregatedSnapshot
   , fromSymbol     :: String
   , toSymbol       :: String
   , flags          :: String
-  , price          :: String
-  , lastUpdate     :: String
-  , lastVolume     :: String
-  , lastVolumeto   :: String
+  , price          :: Float
+  , lastUpdate     :: Integer
+  , lastVolume     :: Float
+  , lastVolumeto   :: Float
   , lastTradeId    :: String
-  , volume24Hour   :: String
-  , volume24HourTo :: String
-  , open24Hour     :: String
-  , high24Hour     :: String
-  , low24Hour      :: String
+  , volume24Hour   :: Float
+  , volume24HourTo :: Float
+  , open24Hour     :: Float
+  , high24Hour     :: Float
+  , low24Hour      :: Float
   , lastMarket     :: String
   } deriving (Show)
 instance FromJSON AggregatedSnapshot where
@@ -136,16 +137,16 @@ instance FromJSON AggregatedSnapshot where
     AggregatedSnapshot <$> x .: "MARKET" <*> x .: "FROMSYMBOL" <*>
     x .: "TOSYMBOL" <*>
     x .: "FLAGS" <*>
-    x .: "PRICE" <*>
-    x .: "LASTUPDATE" <*>
-    x .: "LASTVOLUME" <*>
-    x .: "LASTVOLUMETO" <*>
+    (read <$> x .: "PRICE") <*>
+    (read <$> x .: "LASTUPDATE") <*>
+    (read <$> x .: "LASTVOLUME") <*>
+    (read <$> x .: "LASTVOLUMETO") <*>
     x .: "LASTTRADEID" <*>
-    x .: "VOLUME24HOUR" <*>
-    x .: "VOLUME24HOURTO" <*>
-    x .: "OPEN24HOUR" <*>
-    x .: "HIGH24HOUR" <*>
-    x .: "LOW24HOUR" <*>
+    (read <$> x .: "VOLUME24HOUR") <*>
+    (read <$> x .: "VOLUME24HOURTO") <*>
+    (read <$> x .: "OPEN24HOUR") <*>
+    (read <$> x .: "HIGH24HOUR") <*>
+    (read <$> x .: "LOW24HOUR") <*>
     x .: "LASTMARKET"
   parseJSON _ = error "expected an object"
 
