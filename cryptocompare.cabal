@@ -1,13 +1,13 @@
 name:                cryptocompare
-version:             0.1.0.0
+version:             0.0.1
 -- synopsis:
--- description:
+-- description: A haskell wrapper for the cryptocompare API, a source of information and pricing of different crypto currencies
 homepage:            https://github.com/githubuser/cryptocompare#readme
-license:             BSD3
+license:             MIT
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2017 Author name here
+author:              Avi Press
+maintainer:          avipress@gmail.com
+copyright:           2017 Avi Press
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Lib
+  exposed-modules:     CryptoCompare
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010
   build-depends:       base >= 4.8 && < 5
