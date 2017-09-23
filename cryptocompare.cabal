@@ -1,8 +1,23 @@
 name:                cryptocompare
 version:             0.0.1
--- synopsis:
--- description: A haskell wrapper for the cryptocompare API, a source of information and pricing of different crypto currencies
-homepage:            https://github.com/githubuser/cryptocompare#readme
+synopsis:            Haskell wrapper for the cryptocompare API
+description:
+      # CryptoCompare
+
+      [![Build Status](https://travis-ci.org/aviaviavi/cryptocompare.svg?branch=master)](https://travis-ci.org/aviaviavi/cryptocompare)
+
+      A Haskell wrapper to the public [CryptoCompare API](https://www.cryptocompare.com/api/), a 
+      source of information and pricing of different crypto currencies
+
+      ## State
+
+      This library is usable but not complete. It currently covers a subset of the API.
+      Breaking changes will occur if necessary but will be avoided if possible.
+
+      ## Contributing
+
+      Contributions in any form are always welcome.
+homepage:            https://github.com/aviaviavi/cryptocompare
 license:             MIT
 license-file:        LICENSE
 author:              Avi Press
