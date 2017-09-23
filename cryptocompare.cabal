@@ -1,6 +1,8 @@
 name:                cryptocompare
 version:             0.0.3
 synopsis:            Haskell wrapper for the cryptocompare API
+description:
+    Haskell wrapper for the cryptocompare API, a source of information and pricing of different crypto-currencies.
 homepage:            https://github.com/aviaviavi/cryptocompare
 license:             MIT
 license-file:        LICENSE
