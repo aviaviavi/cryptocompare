@@ -1,7 +1,6 @@
-{-# LANGUAGE DeriveGeneric         #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | A haskell wrapper for the cryptocompare API, a source of information and pricing of different crypto currencies
 module CryptoCompare
@@ -9,11 +8,9 @@ module CryptoCompare
   , fetchCurrentPrice
   , fetchDailyPriceHistory
   , fetchCoinSnapshot
-  , CoinListResponse(..)
   , CoinDetails(..)
   , PriceHistoryResponse(..)
   , PriceHistoryResponseData(..)
-  , CoinSnapshotResponse(..)
   , CoinSnapshot(..)
   , AggregatedSnapshot(..)
   , PriceResponse(..)
@@ -44,8 +41,7 @@ data CoinListResponse = CoinListResponse {
   coins        :: [CoinDetails]
 } deriving (Show, Generic)
 
--- | High level information about each coin, part of
--- 'CoinListResponse'
+-- | High level information about each coin.
 data CoinDetails = CoinDetails {
   _key      :: String,
   id        :: String,
@@ -76,36 +72,35 @@ instance ToQueryString PriceRequest where
 
 -- | Request a more detailed view of a coin's information
 data CoinSnapshotRequest = CoinSnapshotRequest {
-  fromSym :: String,
-  toSym   :: String
+  snapshotFromSym :: String,
+  snapshotToSym   :: String
 }
 
 instance ToQueryString CoinSnapshotRequest where
   toQueryString req =
     printf
       "?fsym=%s&tsym=%s"
-      (fromSym (req :: CoinSnapshotRequest))
-      (toSym (req :: CoinSnapshotRequest))
+      (snapshotFromSym req)
+      (snapshotToSym req)
 
 -- | Response containing more detailed meta information about a coin, as well as
 -- aggregated pricing information
 data CoinSnapshotResponse = CoinSnapshotResponse
-  { response     :: String
-  , message      :: String
-  , responseType :: Integer
-  , snapshot     :: CoinSnapshot
+  { snapshotResponseMessage :: String
+  , snapshotResponseType    :: Integer
+  , snapshot                :: CoinSnapshot
   } deriving (Show)
 
 instance FromJSON CoinSnapshotResponse where
   parseJSON (Object x) =
-    CoinSnapshotResponse <$> x .: "Response" <*> x .: "Message" <*> x .: "Type" <*>
+    CoinSnapshotResponse <$> x .: "Message" <*> x .: "Type" <*>
     x .: "Data"
   parseJSON _ = error "expected an object"
 
 -- | High level data about a particular coin
 data CoinSnapshot = CoinSnapshot
-  { algorithm              :: String
-  , proofType              :: String
+  { snapshotAlgorithm      :: String
+  , snapshotProofType      :: String
   , blockNumber            :: Integer
   , netHashesPerSecond     :: Float
   , totalCoinsMined        :: Float
@@ -138,7 +133,7 @@ data AggregatedSnapshot = AggregatedSnapshot
   , volume24HourTo :: Float
   , open24Hour     :: Float
   , high24Hour     :: Float
-  , low24Hour      :: Float -- ^ a description of the getter here!!!!
+  , low24Hour      :: Float
   , lastMarket     :: String
   } deriving (Show)
 instance FromJSON AggregatedSnapshot where
@@ -160,7 +155,7 @@ instance FromJSON AggregatedSnapshot where
   parseJSON _ = error "expected an object"
 
 -- | contains pairs of prices: crypto symbol -> (regular currency symbol, price)
-data PriceResponse =
+newtype PriceResponse =
   PriceResponse (Map String Float)
   deriving (Show, Generic)
 instance FromJSON PriceResponse
@@ -168,13 +163,13 @@ instance FromJSON PriceResponse
 -- | Get the price history of a coin (daily)
 data PriceHistoryRequest = PriceHistoryRequest {
   -- | coin symbol
-  fromSym     :: String,
+  historyFromSym :: String,
   -- | display in currency
-  toSym       :: String,
+  historyToSym   :: String,
   -- | most recent timestamp in returned result
-  toTimestamp :: Maybe UTCTime,
+  toTimestamp    :: Maybe UTCTime,
   -- | days to go back
-  limit       :: Maybe Integer
+  limit          :: Maybe Integer
 }
 priceHistReqDefault :: PriceHistoryRequest
 priceHistReqDefault = PriceHistoryRequest "" [] Nothing Nothing
@@ -208,8 +203,8 @@ instance ToQueryString PriceHistoryRequest where
   toQueryString req =
     printf
       "?fsym=%s&tsym=%s&limit=%s"
-      (fromSym (req :: PriceHistoryRequest))
-      (toSym (req :: PriceHistoryRequest))
+      (historyFromSym req)
+      (historyToSym req)
       (fromMaybe "" (show <$> limit req))
 
 instance FromJSON CoinListResponse where
@@ -244,6 +239,14 @@ parseCointListResponseData (i, v) =
 
 -- | Get a list of all of the coins the API is aware of, and high level details
 -- about those coins
+--
+-- @
+-- do
+--   coinList <- fetchCoinList
+--   either print (print . length) coinList
+--   either print (print . head) coinList
+-- @
+--
 fetchCoinList :: (MonadIO m, MonadCatch m) => m (Either String [CoinDetails])
 fetchCoinList = catchIOError (do
   r <- httpJSON "https://www.cryptocompare.com/api/data/coinlist/"
@@ -251,26 +254,40 @@ fetchCoinList = catchIOError (do
   (return . Left . show)
 
 -- | For a given coin, get a daily history of the coin's price
+--
+-- > do
+-- >   priceHistResp <- fetchDailyPriceHistory "BTC" "USD" 300
+-- >   print priceHistResp
+--
 fetchDailyPriceHistory ::
      (MonadIO m, MonadThrow m, MonadCatch m)
-  => String
-  -> String
-  -> Integer
-  -> m (Either String PriceHistoryResponse)
+  => String -- ^ Coin symbol (`BTC`, `ETH`, etc)
+  -> String -- ^ Currency symbol to display prices in (`USD`, `EUR`, etc)
+  -> Integer -- ^ Days of history to return (Max 2000)
+  -> m (Either String PriceHistoryResponse) -- ^ Either an error or response data
 fetchDailyPriceHistory coinSymbol priceCurrency days = catchIOError (do
   priceHistReq <-
     return . parseRequest $
     "https://min-api.cryptocompare.com/data/histoday" ++
     toQueryString
       (priceHistReqDefault
-       {fromSym = coinSymbol, toSym = priceCurrency, limit = Just days} :: PriceHistoryRequest)
+       {historyFromSym = coinSymbol, historyToSym = priceCurrency, limit = Just days} :: PriceHistoryRequest)
   r <- httpJSON <$> priceHistReq
   Right . getResponseBody <$> r)
   (return . Left . show)
 
 -- | For a given coin, get the current price
+--
+--
+-- > do
+-- >   priceResp <- fetchCurrentPrice "BTC" ["USD", "EUR", "BTC"]
+-- >   print priceResp
+--
 fetchCurrentPrice ::
-     (MonadIO m, MonadThrow m, MonadCatch m) => String -> [String] -> m (Either String PriceResponse)
+     (MonadIO m, MonadThrow m, MonadCatch m)
+     => String -- ^ Coin symbol (`BTC`, `ETH`, etc)
+     -> [String] -- ^ Currency symbol(s) to display prices in. Eg [`USD`, `EUR`, ...]
+     -> m (Either String PriceResponse) -- ^ Either an error or response data
 fetchCurrentPrice coinSymbol priceSymbols = catchIOError (do
   priceReq <-
     return . parseRequest $
@@ -281,12 +298,20 @@ fetchCurrentPrice coinSymbol priceSymbols = catchIOError (do
   (return . Left . show)
 
 -- | Fetch details about a particular coin
-fetchCoinSnapshot :: (MonadIO m, MonadThrow m, MonadCatch m) => String -> String -> m (Either String CoinSnapshotResponse)
+--
+-- > do
+-- >  snapshotResp <- fetchCoinSnapshot "BTC" "USD"
+-- >  print snapshotResp
+--
+fetchCoinSnapshot :: (MonadIO m, MonadThrow m, MonadCatch m)
+  => String -- ^ Coin symbol (`BTC`, `ETH`, etc)
+  -> String -- ^ Currency symbol(s) to display prices in (`USD`, `EUR`, etc)
+  -> m (Either String CoinSnapshot) -- ^ Either an error or response data
 fetchCoinSnapshot fSym tSym = catchIOError (do
   snapshotReq <-
     return . parseRequest $
     "https://www.cryptocompare.com/api/data/coinsnapshot" ++
     toQueryString (CoinSnapshotRequest fSym tSym)
   r <- httpJSON <$> snapshotReq
-  Right . getResponseBody <$> r)
+  Right . snapshot . getResponseBody <$> r)
   (return . Left . show)

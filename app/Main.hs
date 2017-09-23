@@ -9,7 +9,7 @@ main = do
   either print (print . head) coinList
   priceResp <- fetchCurrentPrice "BTC" ["USD", "EUR", "BTC"]
   print priceResp
-  -- priceHistResp <- fetchDailyPriceHistory "BTC" "USD" 300
-  -- print priceHistResp
-  -- snapshotResp <- fetchCoinSnapshot "BTC" "USD"
-  -- print snapshotResp
+  priceHistResp <- fetchDailyPriceHistory "BTC" "USD" 300
+  print priceHistResp
+  snapshotResp <- fetchCoinSnapshot "BTC" "USD"
+  print snapshotResp
