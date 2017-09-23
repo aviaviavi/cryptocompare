@@ -1,5 +1,5 @@
 name:                cryptocompare
-version:             0.0.2
+version:             0.0.3
 synopsis:            Haskell wrapper for the cryptocompare API
 homepage:            https://github.com/aviaviavi/cryptocompare
 license:             MIT
@@ -16,27 +16,6 @@ library
   hs-source-dirs:      src
   exposed-modules:     CryptoCompare
   build-depends:       base >= 4.7 && < 5
-  default-language:    Haskell2010
-  build-depends:       base >= 4.8 && < 5
-                     , directory
-                     , text
-                     , MissingH
-                     , time
-                     , aeson
-                     , unordered-containers
-                     , http-conduit
-                     , bytestring
-                     , containers
-                     , transformers
-                     , exceptions
-
-
-executable cryptocompare-exe
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  build-depends:       base
-                     , cryptocompare
   default-language:    Haskell2010
   build-depends:       base >= 4.8 && < 5
                      , directory
