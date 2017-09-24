@@ -1,6 +1,7 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- | A haskell wrapper for the cryptocompare API, a source of information and pricing of different crypto currencies
 --
@@ -33,7 +34,7 @@ module CryptoCompare
   , PriceResponse(..)
   ) where
 
-import           Control.Monad.Catch
+import qualified Control.Exception      as E
 import           Control.Monad.IO.Class
 import           Data.Aeson
 import           Data.Aeson.Types
@@ -238,6 +239,9 @@ instance {-# OVERLAPS #-} FromJSON [CoinDetails] where
     parseJSON x =
       parseJSON x >>= mapM parseCointListResponseData . toList
 
+showError :: HttpException -> Either String a
+showError = Left . show
+
 -- Since this entry uses keys that we don't know ahead of time, we
 -- need to do some special parsing that doesn't require it.
 parseCointListResponseData :: (String, Value) -> Parser CoinDetails
@@ -264,11 +268,13 @@ parseCointListResponseData (i, v) =
 --   either print (print . head) coinList
 -- @
 --
-fetchCoinList :: (MonadIO m, MonadCatch m) => m (Either String [CoinDetails])
-fetchCoinList = catchIOError (do
-  r <- httpJSON "https://www.cryptocompare.com/api/data/coinlist/"
-  return . Right . coins $ getResponseBody r)
-  (return . Left . show)
+fetchCoinList :: (MonadIO m) => m (Either String [CoinDetails])
+fetchCoinList =
+  liftIO $
+  E.catch
+    (do r <- httpJSON "https://www.cryptocompare.com/api/data/coinlist/"
+        return . Right . coins $ getResponseBody r)
+    (return . showError)
 
 -- | For a given coin, get a daily history of the coin's price
 --
@@ -277,21 +283,26 @@ fetchCoinList = catchIOError (do
 -- >   print priceHistResp
 --
 fetchDailyPriceHistory ::
-     (MonadIO m, MonadThrow m, MonadCatch m)
+     (MonadIO m)
   => String -- ^ Coin symbol (`BTC`, `ETH`, etc)
   -> String -- ^ Currency symbol to display prices in (`USD`, `EUR`, etc)
   -> Integer -- ^ Days of history to return (Max 2000)
   -> m (Either String PriceHistoryResponse) -- ^ Either an error or response data
-fetchDailyPriceHistory coinSymbol priceCurrency days = catchIOError (do
-  priceHistReq <-
-    return . parseRequest $
-    "https://min-api.cryptocompare.com/data/histoday" ++
-    toQueryString
-      (priceHistReqDefault
-       {historyFromSym = coinSymbol, historyToSym = priceCurrency, limit = Just days} :: PriceHistoryRequest)
-  r <- httpJSON <$> priceHistReq
-  Right . getResponseBody <$> r)
-  (return . Left . show)
+fetchDailyPriceHistory coinSymbol priceCurrency days =
+  liftIO $
+  E.catch
+    (do priceHistReq <-
+          return . parseRequest $
+          "https://min-api.cryptocompare.com/data/histoday" ++
+          toQueryString
+            (priceHistReqDefault
+             { historyFromSym = coinSymbol
+             , historyToSym = priceCurrency
+             , limit = Just days
+             } :: PriceHistoryRequest)
+        r <- httpJSON <$> priceHistReq
+        Right . getResponseBody <$> r)
+    (return . showError)
 
 -- | For a given coin, get the current price
 --
@@ -301,18 +312,20 @@ fetchDailyPriceHistory coinSymbol priceCurrency days = catchIOError (do
 -- >   print priceResp
 --
 fetchCurrentPrice ::
-     (MonadIO m, MonadThrow m, MonadCatch m)
-     => String -- ^ Coin symbol (`BTC`, `ETH`, etc)
-     -> [String] -- ^ Currency symbol(s) to display prices in. Eg [`USD`, `EUR`, ...]
-     -> m (Either String PriceResponse) -- ^ Either an error or response data
-fetchCurrentPrice coinSymbol priceSymbols = catchIOError (do
-  priceReq <-
-    return . parseRequest $
-    "https://min-api.cryptocompare.com/data/price" ++
-    toQueryString (PriceRequest coinSymbol priceSymbols)
-  r <- httpJSON <$> priceReq
-  Right . getResponseBody <$> r)
-  (return . Left . show)
+     MonadIO m
+  => String -- ^ Coin symbol (`BTC`, `ETH`, etc)
+  -> [String] -- ^ Currency symbol(s) to display prices in. Eg [`USD`, `EUR`, ...]
+  -> m (Either String PriceResponse) -- ^ Either an error or response data
+fetchCurrentPrice coinSymbol priceSymbols =
+  liftIO $
+  E.catch
+    (do priceReq <-
+          return . parseRequest $
+          "https://min-api.cryptocompare.com/data/price" ++
+          toQueryString (PriceRequest coinSymbol priceSymbols)
+        r <- httpJSON <$> priceReq
+        Right . getResponseBody <$> r)
+    (return . showError)
 
 -- | Fetch details about a particular coin
 --
@@ -320,15 +333,18 @@ fetchCurrentPrice coinSymbol priceSymbols = catchIOError (do
 -- >  snapshotResp <- fetchCoinSnapshot "BTC" "USD"
 -- >  print snapshotResp
 --
-fetchCoinSnapshot :: (MonadIO m, MonadThrow m, MonadCatch m)
+fetchCoinSnapshot ::
+     MonadIO m
   => String -- ^ Coin symbol (`BTC`, `ETH`, etc)
   -> String -- ^ Currency symbol(s) to display prices in (`USD`, `EUR`, etc)
   -> m (Either String CoinSnapshot) -- ^ Either an error or response data
-fetchCoinSnapshot fSym tSym = catchIOError (do
-  snapshotReq <-
-    return . parseRequest $
-    "https://www.cryptocompare.com/api/data/coinsnapshot" ++
-    toQueryString (CoinSnapshotRequest fSym tSym)
-  r <- httpJSON <$> snapshotReq
-  Right . snapshot . getResponseBody <$> r)
-  (return . Left . show)
+fetchCoinSnapshot fSym tSym =
+  liftIO $
+  E.catch
+    (do snapshotReq <-
+          return . parseRequest $
+          "https://www.cryptocompare.com/api/data/coinsnapshot" ++
+          toQueryString (CoinSnapshotRequest fSym tSym)
+        r <- httpJSON <$> snapshotReq
+        Right . snapshot . getResponseBody <$> r)
+    (return . showError)
