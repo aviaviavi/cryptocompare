@@ -1,7 +1,6 @@
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 -- | A haskell wrapper for the cryptocompare API, a source of information and pricing of different crypto currencies
 --
