@@ -4,7 +4,7 @@
 [![Hackage](https://img.shields.io/hackage/v/cryptocompare.svg)](https://hackage.haskell.org/package/cryptocompare-0.0.3)
 
 A Haskell wrapper to the public [CryptoCompare API](https://www.cryptocompare.com/api/), a 
-source of information and pricing of different crypto currencies
+source of information and pricing of different crypto currencies. See hackage for API documentation.
 
 ## State
 
