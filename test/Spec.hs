@@ -2,7 +2,7 @@
 
 import           CryptoCompare
 import           Data.Either
-import           Data.Either.Utils
+import qualified Data.Either.Utils as U
 import           Test.Hspec
 
 main :: IO ()
@@ -11,7 +11,7 @@ main = hspec $
     it "performs basic example fetches" $ do
   coinList <- fetchCoinList
   coinList `shouldSatisfy` isRight
-  fromRight coinList `shouldSatisfy` (\x -> length x > 1000)
+  U.fromRight coinList `shouldSatisfy` (\x -> length x > 1000)
   priceResp <- fetchCurrentPrice "BTC" ["USD", "EUR", "BTC"]
   priceResp `shouldSatisfy` isRight
   priceHistResp <- fetchDailyPriceHistory "BTC" "USD" 300
