@@ -1,6 +1,6 @@
-{-# LANGUAGE DeriveGeneric       #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | A haskell wrapper for the cryptocompare API, a source of information and pricing of different crypto currencies
 --
@@ -126,14 +126,15 @@ data CoinSnapshot = CoinSnapshot
   } deriving (Show)
 
 instance FromJSON CoinSnapshot where
-  parseJSON (Object x) =
-    CoinSnapshot <$> x .: "Algorithm" <*> x .: "ProofType" <*>
-    x .: "BlockNumber" <*>
-    x .: "NetHashesPerSecond" <*>
-    x .: "TotalCoinsMined" <*>
-    x .: "BlockReward" <*>
-    x .: "AggregatedData"
-  parseJSON _ = error "expected an object"
+  parseJSON = withObject "coin shapshot" $ \object -> do
+    coinInfo <- object .: "CoinInfo"
+    CoinSnapshot <$> coinInfo .: "Algorithm" <*> coinInfo .: "ProofType" <*>
+      coinInfo .: "BlockNumber" <*>
+      coinInfo .: "NetHashesPerSecond" <*>
+      coinInfo .: "TotalCoinsMined" <*>
+      coinInfo .: "BlockReward" <*>
+      object   .: "AggregatedData"
+  -- parseJSON _ = error "expected an object"
 
 -- | Aggregated data about a particular coin
 data AggregatedSnapshot = AggregatedSnapshot
@@ -158,16 +159,16 @@ instance FromJSON AggregatedSnapshot where
     AggregatedSnapshot <$> x .: "MARKET" <*> x .: "FROMSYMBOL" <*>
     x .: "TOSYMBOL" <*>
     x .: "FLAGS" <*>
-    (read <$> x .: "PRICE") <*>
-    (read <$> x .: "LASTUPDATE") <*>
-    (read <$> x .: "LASTVOLUME") <*>
-    (read <$> x .: "LASTVOLUMETO") <*>
+    x .: "PRICE" <*>
+    x .: "LASTUPDATE" <*>
+    x .: "LASTVOLUME" <*>
+    x .: "LASTVOLUMETO" <*>
     x .: "LASTTRADEID" <*>
-    (read <$> x .: "VOLUME24HOUR") <*>
-    (read <$> x .: "VOLUME24HOURTO") <*>
-    (read <$> x .: "OPEN24HOUR") <*>
-    (read <$> x .: "HIGH24HOUR") <*>
-    (read <$> x .: "LOW24HOUR") <*>
+    x .: "VOLUME24HOUR" <*>
+    x .: "VOLUME24HOURTO" <*>
+    x .: "OPEN24HOUR" <*>
+    x .: "HIGH24HOUR" <*>
+    x .: "LOW24HOUR" <*>
     x .: "LASTMARKET"
   parseJSON _ = error "expected an object"
 
@@ -342,7 +343,7 @@ fetchCoinSnapshot fSym tSym =
   E.catch
     (do snapshotReq <-
           return . parseRequest $
-          "https://www.cryptocompare.com/api/data/coinsnapshot" ++
+          "https://min-api.cryptocompare.com/data/top/exchanges/full" ++
           toQueryString (CoinSnapshotRequest fSym tSym)
         r <- httpJSON <$> snapshotReq
         Right . snapshot . getResponseBody <$> r)
