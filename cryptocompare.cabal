@@ -1,5 +1,5 @@
 name:                cryptocompare
-version:             0.1.1
+version:             0.1.2
 synopsis:            Haskell wrapper for the cryptocompare API
 description:
     Haskell wrapper for the cryptocompare API, a source of information and pricing of different crypto-currencies.
