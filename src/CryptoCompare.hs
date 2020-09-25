@@ -134,7 +134,6 @@ instance FromJSON CoinSnapshot where
       coinInfo .: "TotalCoinsMined" <*>
       coinInfo .: "BlockReward" <*>
       object   .: "AggregatedData"
-  -- parseJSON _ = error "expected an object"
 
 -- | Aggregated data about a particular coin
 data AggregatedSnapshot = AggregatedSnapshot
